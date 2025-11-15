@@ -176,6 +176,36 @@ def init_db():
     conn.commit()
     conn.close()
 
+@app.get("/users/{user_id}/events")
+def get_user_events(user_id: int):
+    events = load_events()  # events.json
+    user_events = [e for e in events if e["createdBy"] == user_id]
+    return user_events
+
+@app.get("/users/{user_id}/events/count")
+def get_user_event_count(user_id: int):
+    events = load_events()
+    count = sum(1 for e in events if e["createdBy"] == user_id)
+    return {"count": count}
+
+@app.delete("/users/{user_id}")
+def delete_user(user_id: int):
+    users = load_users()
+    users = [u for u in users if u["id"] != user_id]
+    save_users(users)
+
+    # 사용자가 만든 일정도 삭제 (권장)
+    events = load_events()
+    events = [e for e in events if e["createdBy"] != user_id]
+    save_events(events)
+
+    return {"message": "회원 삭제 완료"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+
 
 # 서버 시작 시 실행
 init_db()
